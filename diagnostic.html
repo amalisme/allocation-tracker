@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnostics - Allocation Tracker</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h2 { color: #4F46E5; margin-top: 0; }
+        pre {
+            background: #f0f0f0;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .success { color: #059669; }
+        .error { color: #ef4444; }
+        button {
+            background: #4F46E5;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>🔍 PWA Diagnostics</h2>
+        <p>This page will help diagnose why your PWA shows 404 error.</p>
+    </div>
+
+    <div class="card">
+        <h2>📍 Current Location</h2>
+        <pre id="location-info"></pre>
+    </div>
+
+    <div class="card">
+        <h2>🔧 Service Worker Status</h2>
+        <pre id="sw-status"></pre>
+        <button onclick="checkServiceWorker()">Refresh Status</button>
+        <button onclick="unregisterSW()">Unregister Service Worker</button>
+    </div>
+
+    <div class="card">
+        <h2>💾 Cache Contents</h2>
+        <pre id="cache-info"></pre>
+        <button onclick="checkCaches()">Check Caches</button>
+        <button onclick="clearAllCaches()">Clear All Caches</button>
+    </div>
+
+    <div class="card">
+        <h2>📦 Local Storage</h2>
+        <pre id="storage-info"></pre>
+    </div>
+
+    <div class="card">
+        <h2>🔗 Navigation Test</h2>
+        <button onclick="window.location.href='index.html'">Go to Main App</button>
+        <button onclick="window.location.href='./'">Go to Root</button>
+    </div>
+
+    <script>
+        // Display location info
+        function showLocationInfo() {
+            const info = {
+                'Full URL': window.location.href,
+                'Origin': window.location.origin,
+                'Pathname': window.location.pathname,
+                'Host': window.location.host,
+                'Protocol': window.location.protocol,
+                'Base Path': window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1)
+            };
+            document.getElementById('location-info').textContent = JSON.stringify(info, null, 2);
+        }
+
+        // Check Service Worker
+        async function checkServiceWorker() {
+            const statusEl = document.getElementById('sw-status');
+            
+            if (!('serviceWorker' in navigator)) {
+                statusEl.innerHTML = '<span class="error">❌ Service Workers not supported</span>';
+                return;
+            }
+
+            try {
+                const registration = await navigator.serviceWorker.getRegistration();
+                
+                if (!registration) {
+                    statusEl.innerHTML = '<span class="error">❌ No Service Worker registered</span>';
+                    return;
+                }
+
+                const info = {
+                    'Status': '✅ Registered',
+                    'Scope': registration.scope,
+                    'Active': registration.active ? 'Yes' : 'No',
+                    'Installing': registration.installing ? 'Yes' : 'No',
+                    'Waiting': registration.waiting ? 'Yes' : 'No',
+                    'Update Found': registration.updateViaCache
+                };
+
+                statusEl.innerHTML = '<span class="success">' + JSON.stringify(info, null, 2) + '</span>';
+            } catch (error) {
+                statusEl.innerHTML = '<span class="error">❌ Error: ' + error.message + '</span>';
+            }
+        }
+
+        // Unregister Service Worker
+        async function unregisterSW() {
+            if ('serviceWorker' in navigator) {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                for (let registration of registrations) {
+                    await registration.unregister();
+                }
+                alert('Service Worker unregistered! Refresh the page.');
+            }
+        }
+
+        // Check caches
+        async function checkCaches() {
+            const cacheEl = document.getElementById('cache-info');
+            
+            if (!('caches' in window)) {
+                cacheEl.innerHTML = '<span class="error">❌ Cache API not supported</span>';
+                return;
+            }
+
+            try {
+                const cacheNames = await caches.keys();
+                
+                if (cacheNames.length === 0) {
+                    cacheEl.innerHTML = '<span class="error">❌ No caches found</span>';
+                    return;
+                }
+
+                let output = `<span class="success">✅ Found ${cacheNames.length} cache(s):</span>\n\n`;
+                
+                for (const cacheName of cacheNames) {
+                    const cache = await caches.open(cacheName);
+                    const requests = await cache.keys();
+                    output += `Cache: ${cacheName}\n`;
+                    output += `URLs cached (${requests.length}):\n`;
+                    requests.forEach(req => {
+                        output += `  - ${req.url}\n`;
+                    });
+                    output += '\n';
+                }
+
+                cacheEl.textContent = output;
+            } catch (error) {
+                cacheEl.innerHTML = '<span class="error">❌ Error: ' + error.message + '</span>';
+            }
+        }
+
+        // Clear all caches
+        async function clearAllCaches() {
+            if ('caches' in window) {
+                const cacheNames = await caches.keys();
+                for (let name of cacheNames) {
+                    await caches.delete(name);
+                }
+                alert('All caches cleared! Refresh the page.');
+                checkCaches();
+            }
+        }
+
+        // Check localStorage
+        function checkStorage() {
+            const storageEl = document.getElementById('storage-info');
+            const data = localStorage.getItem('allocationData');
+            
+            if (data) {
+                storageEl.textContent = JSON.stringify(JSON.parse(data), null, 2);
+            } else {
+                storageEl.textContent = 'No data in localStorage';
+            }
+        }
+
+        // Initialize
+        showLocationInfo();
+        checkServiceWorker();
+        checkCaches();
+        checkStorage();
+    </script>
+</body>
+</html>
