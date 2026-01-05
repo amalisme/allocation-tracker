@@ -10,6 +10,50 @@ const ALLOCATIONS = {
     }
 };
 
+// Historical data - will be loaded on first run only
+const HISTORICAL_DATA = {
+    hp: [
+        {
+            amount: 0,
+            date: '2024-12-18T00:00:00.000Z',
+            displayDate: '18 Dec 2024',
+            notes: 'Thomas transfer'
+        },
+        {
+            amount: 3000,
+            date: '2024-12-30T00:00:00.000Z',
+            displayDate: '30 Dec 2024',
+            notes: 'First payment Dec (000608339)'
+        },
+        {
+            amount: 2800,
+            date: '2026-01-05T00:00:00.000Z',
+            displayDate: '05 Jan 2026',
+            notes: 'Second payment Jan (206677)'
+        }
+    ],
+    mortgage: [
+        {
+            amount: 0,
+            date: '2024-12-18T00:00:00.000Z',
+            displayDate: '18 Dec 2024',
+            notes: 'Thomas transfer'
+        },
+        {
+            amount: 1700,
+            date: '2024-12-23T00:00:00.000Z',
+            displayDate: '23 Dec 2024',
+            notes: 'First payment Dec (609136086)'
+        },
+        {
+            amount: 2524,
+            date: '2026-01-05T00:00:00.000Z',
+            displayDate: '05 Jan 2026',
+            notes: 'Second payment + Yearly Takaful RM845.57 (612174498)'
+        }
+    ]
+};
+
 // State management - stores data in browser
 let payments = {
     hp: [],
@@ -21,9 +65,13 @@ function loadData() {
     const saved = localStorage.getItem('allocationData');
     if (saved) {
         payments = JSON.parse(saved);
-        updateDisplay();
-        renderHistory();
+    } else {
+        // First time loading - use historical data
+        payments = JSON.parse(JSON.stringify(HISTORICAL_DATA));
+        saveData();
     }
+    updateDisplay();
+    renderHistory();
 }
 
 // Save data to browser storage
@@ -34,12 +82,14 @@ function saveData() {
 // Add a payment
 function addPayment(type) {
     const inputId = type === 'hp' ? 'hp-payment' : 'mortgage-payment';
+    const notesId = type === 'hp' ? 'hp-notes' : 'mortgage-notes';
     const input = document.getElementById(inputId);
+    const notesInput = document.getElementById(notesId);
     const amount = parseFloat(input.value);
     
-    // Validation
-    if (!amount || amount <= 0) {
-        alert('Please enter a valid amount');
+    // Validation - allow 0 or positive numbers
+    if (isNaN(amount) || amount < 0) {
+        alert('Please enter a valid amount (0 or greater)');
         return;
     }
     
@@ -49,17 +99,16 @@ function addPayment(type) {
         return;
     }
     
-    // Add payment with timestamp
+    // Add payment with timestamp and notes
     payments[type].push({
         amount: amount,
         date: new Date().toISOString(),
         displayDate: new Date().toLocaleDateString('en-MY', {
             day: '2-digit',
             month: 'short',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        })
+            year: 'numeric'
+        }),
+        notes: notesInput ? notesInput.value || '' : ''
     });
     
     // Save and update
@@ -67,8 +116,9 @@ function addPayment(type) {
     updateDisplay();
     renderHistory();
     
-    // Clear input
+    // Clear inputs
     input.value = '';
+    if (notesInput) notesInput.value = '';
     
     // Visual feedback
     showSuccessMessage(type);
@@ -129,9 +179,10 @@ function renderHistory() {
             <div>
                 <strong>${payment.name}</strong><br>
                 <small style="color: #6b7280">${payment.displayDate}</small>
+                ${payment.notes ? `<br><small style="color: #9ca3af">📝 ${payment.notes}</small>` : ''}
             </div>
-            <div style="font-weight: 600; color: #ef4444">
-                -RM ${payment.amount.toLocaleString('en-MY', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+            <div style="font-weight: 600; color: ${payment.amount === 0 ? '#6b7280' : '#ef4444'}">
+                ${payment.amount === 0 ? 'RM 0.00' : `-RM ${payment.amount.toLocaleString('en-MY', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`}
             </div>
         </div>
     `).join('');
