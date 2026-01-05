@@ -1,7 +1,7 @@
 {
   "name": "Allocation Tracker",
-  "short_name": "Allocations",
-  "description": "Track your monthly hire purchase and mortgage allocations",
+  "short_name": "Mawar&Alphard",
+  "description": "Track monthly hire purchase and mortgage allocations",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
