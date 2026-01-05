@@ -1,19 +1,27 @@
 // Service Worker - Enables offline functionality
+// Fixed for GitHub Pages deployment
 
-const CACHE_NAME = 'allocation-tracker-v1';
+const CACHE_NAME = 'allocation-tracker-v2';
+
+// Get the base path dynamically
+const BASE_PATH = self.location.pathname.substring(0, self.location.pathname.lastIndexOf('/') + 1);
+
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/styles.css',
-  '/app.js',
-  '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png'
+  BASE_PATH,
+  BASE_PATH + 'index.html',
+  BASE_PATH + 'styles.css',
+  BASE_PATH + 'app.js',
+  BASE_PATH + 'manifest.json',
+  BASE_PATH + 'icon-192.png',
+  BASE_PATH + 'icon-512.png'
 ];
 
 // Install event - cache all files
 self.addEventListener('install', (event) => {
   console.log('Service Worker: Installing...');
+  console.log('Base path:', BASE_PATH);
+  console.log('Caching:', urlsToCache);
+  
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
@@ -70,9 +78,9 @@ self.addEventListener('fetch', (event) => {
           return response;
         });
       })
-      .catch(() => {
+      .catch((error) => {
         // Network failed - could return a custom offline page here
-        console.log('Service Worker: Both cache and network failed');
+        console.log('Service Worker: Both cache and network failed', error);
       })
   );
 });
