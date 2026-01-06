@@ -49,7 +49,7 @@ const HISTORICAL_DATA = {
             amount: 2524,
             date: '2026-01-05T00:00:00.000Z',
             displayDate: '05 Jan 2026',
-            notes: 'Second payment + Yearly Takaful RM845.57 (612174498)'
+            notes: 'Second payment + Takaful RM845.57 (612174498)'
         }
     ]
 };
