@@ -49,7 +49,7 @@ const HISTORICAL_DATA = {
             amount: 2524,
             date: '2026-01-05T00:00:00.000Z',
             displayDate: '05 Jan 2026',
-            notes: 'Second payment + Takaful RM845.57 (612174498)'
+            notes: 'Second payment + Yearly Takaful RM845.57 (612174498)'
         }
     ]
 };
@@ -79,51 +79,6 @@ function saveData() {
     localStorage.setItem('allocationData', JSON.stringify(payments));
 }
 
-// Add a payment
-function addPayment(type) {
-    const inputId = type === 'hp' ? 'hp-payment' : 'mortgage-payment';
-    const notesId = type === 'hp' ? 'hp-notes' : 'mortgage-notes';
-    const input = document.getElementById(inputId);
-    const notesInput = document.getElementById(notesId);
-    const amount = parseFloat(input.value);
-    
-    // Validation - allow 0 or positive numbers
-    if (isNaN(amount) || amount < 0) {
-        alert('Please enter a valid amount (0 or greater)');
-        return;
-    }
-    
-    const remaining = ALLOCATIONS[type].total - getTotalUsed(type);
-    if (amount > remaining) {
-        alert(`Payment exceeds remaining allocation! Only RM ${remaining.toFixed(2)} left.`);
-        return;
-    }
-    
-    // Add payment with timestamp and notes
-    payments[type].push({
-        amount: amount,
-        date: new Date().toISOString(),
-        displayDate: new Date().toLocaleDateString('en-MY', {
-            day: '2-digit',
-            month: 'short',
-            year: 'numeric'
-        }),
-        notes: notesInput ? notesInput.value || '' : ''
-    });
-    
-    // Save and update
-    saveData();
-    updateDisplay();
-    renderHistory();
-    
-    // Clear inputs
-    input.value = '';
-    if (notesInput) notesInput.value = '';
-    
-    // Visual feedback
-    showSuccessMessage(type);
-}
-
 // Calculate total used for an allocation type
 function getTotalUsed(type) {
     return payments[type].reduce((sum, payment) => sum + payment.amount, 0);
@@ -140,9 +95,9 @@ function updateDisplay() {
     // Change color if running low
     const hpRemainingEl = document.getElementById('hp-remaining');
     if (hpRemaining < ALLOCATIONS.hp.total * 0.2) {
-        hpRemainingEl.style.color = '#ef4444';
+        hpRemainingEl.style.color = '#D44C47';
     } else {
-        hpRemainingEl.style.color = '#059669';
+        hpRemainingEl.style.color = '#2D6A4F';
     }
     
     // Mortgage
@@ -153,64 +108,57 @@ function updateDisplay() {
     
     const mortgageRemainingEl = document.getElementById('mortgage-remaining');
     if (mortgageRemaining < ALLOCATIONS.mortgage.total * 0.2) {
-        mortgageRemainingEl.style.color = '#ef4444';
+        mortgageRemainingEl.style.color = '#D44C47';
     } else {
-        mortgageRemainingEl.style.color = '#059669';
+        mortgageRemainingEl.style.color = '#2D6A4F';
     }
 }
 
-// Render payment history
+// Render payment history for each type
 function renderHistory() {
-    const historyList = document.getElementById('history-list');
+    // Render Hire Purchase history
+    const hpHistoryList = document.getElementById('hp-history-list');
+    const hpPayments = payments.hp
+        .map(p => ({...p, type: 'hp', name: ALLOCATIONS.hp.name}))
+        .sort((a, b) => new Date(b.date) - new Date(a.date));
     
-    // Combine all payments and sort by date
-    const allPayments = [
-        ...payments.hp.map(p => ({...p, type: 'hp', name: ALLOCATIONS.hp.name})),
-        ...payments.mortgage.map(p => ({...p, type: 'mortgage', name: ALLOCATIONS.mortgage.name}))
-    ].sort((a, b) => new Date(b.date) - new Date(a.date));
-    
-    if (allPayments.length === 0) {
-        historyList.innerHTML = '<div class="history-empty">No payments yet</div>';
-        return;
+    if (hpPayments.length === 0) {
+        hpHistoryList.innerHTML = '<div class="history-empty">No payments yet</div>';
+    } else {
+        hpHistoryList.innerHTML = hpPayments.map(payment => `
+            <div class="history-item">
+                <div>
+                    <div style="font-weight: 500; color: #1C1C1C; margin-bottom: 2px;">${payment.displayDate}</div>
+                    ${payment.notes ? `<div style="font-size: 0.85rem; color: #8E8E93;">${payment.notes}</div>` : ''}
+                </div>
+                <div style="font-weight: 600; color: ${payment.amount === 0 ? '#8E8E93' : '#D44C47'}; white-space: nowrap;">
+                    ${payment.amount === 0 ? 'RM 0.00' : `-RM ${payment.amount.toLocaleString('en-MY', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`}
+                </div>
+            </div>
+        `).join('');
     }
     
-    historyList.innerHTML = allPayments.map(payment => `
-        <div class="history-item">
-            <div>
-                <strong>${payment.name}</strong><br>
-                <small style="color: #6b7280">${payment.displayDate}</small>
-                ${payment.notes ? `<br><small style="color: #9ca3af">📝 ${payment.notes}</small>` : ''}
+    // Render Mortgage history
+    const mortgageHistoryList = document.getElementById('mortgage-history-list');
+    const mortgagePayments = payments.mortgage
+        .map(p => ({...p, type: 'mortgage', name: ALLOCATIONS.mortgage.name}))
+        .sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    if (mortgagePayments.length === 0) {
+        mortgageHistoryList.innerHTML = '<div class="history-empty">No payments yet</div>';
+    } else {
+        mortgageHistoryList.innerHTML = mortgagePayments.map(payment => `
+            <div class="history-item">
+                <div>
+                    <div style="font-weight: 500; color: #1C1C1C; margin-bottom: 2px;">${payment.displayDate}</div>
+                    ${payment.notes ? `<div style="font-size: 0.85rem; color: #8E8E93;">${payment.notes}</div>` : ''}
+                </div>
+                <div style="font-weight: 600; color: ${payment.amount === 0 ? '#8E8E93' : '#D44C47'}; white-space: nowrap;">
+                    ${payment.amount === 0 ? 'RM 0.00' : `-RM ${payment.amount.toLocaleString('en-MY', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`}
+                </div>
             </div>
-            <div style="font-weight: 600; color: ${payment.amount === 0 ? '#6b7280' : '#ef4444'}">
-                ${payment.amount === 0 ? 'RM 0.00' : `-RM ${payment.amount.toLocaleString('en-MY', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`}
-            </div>
-        </div>
-    `).join('');
-}
-
-// Reset for new month
-function resetMonth() {
-    if (confirm('Are you sure you want to reset all payments for a new month? This cannot be undone.')) {
-        payments = {
-            hp: [],
-            mortgage: []
-        };
-        saveData();
-        updateDisplay();
-        renderHistory();
-        alert('Month reset! Ready for new payments.');
+        `).join('');
     }
-}
-
-// Visual feedback
-function showSuccessMessage(type) {
-    const card = document.querySelector(`.card:nth-child(${type === 'hp' ? 1 : 2})`);
-    card.style.transform = 'scale(1.02)';
-    card.style.boxShadow = '0 8px 16px rgba(79, 70, 229, 0.3)';
-    setTimeout(() => {
-        card.style.transform = 'scale(1)';
-        card.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
-    }, 300);
 }
 
 // PWA Install handling
@@ -219,7 +167,10 @@ let deferredPrompt;
 window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e;
-    document.getElementById('install-prompt').style.display = 'flex';
+    const installPrompt = document.getElementById('install-prompt');
+    if (installPrompt) {
+        installPrompt.style.display = 'flex';
+    }
 });
 
 function installApp() {
@@ -230,13 +181,19 @@ function installApp() {
                 console.log('User accepted the install prompt');
             }
             deferredPrompt = null;
-            document.getElementById('install-prompt').style.display = 'none';
+            const installPrompt = document.getElementById('install-prompt');
+            if (installPrompt) {
+                installPrompt.style.display = 'none';
+            }
         });
     }
 }
 
 function dismissInstall() {
-    document.getElementById('install-prompt').style.display = 'none';
+    const installPrompt = document.getElementById('install-prompt');
+    if (installPrompt) {
+        installPrompt.style.display = 'none';
+    }
 }
 
 // Initialize app
