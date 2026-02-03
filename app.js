@@ -31,6 +31,12 @@ const HISTORICAL_DATA = {
             displayDate: '05 Jan 2026',
             notes: 'Second payment Jan (206677)'
         }
+        {
+            amount: 2800,
+            date: '2026-02-03T00:00:00.000Z',
+            displayDate: '03 Feb 2026',
+            notes: 'Third payment Jan (291971)'
+        }
     ],
     mortgage: [
         {
@@ -50,6 +56,12 @@ const HISTORICAL_DATA = {
             date: '2026-01-05T00:00:00.000Z',
             displayDate: '05 Jan 2026',
             notes: 'Second payment + Yearly Takaful RM845.57 (612174498)'
+        }
+        {
+            amount: 1691,
+            date: '2026-02-03T00:00:00.000Z',
+            displayDate: '03 Feb 2026',
+            notes: 'Third payment (718812054)'
         }
     ]
 };
