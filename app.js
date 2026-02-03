@@ -35,7 +35,7 @@ const HISTORICAL_DATA = {
             amount: 2800,
             date: '2026-02-03T00:00:00.000Z',
             displayDate: '03 Feb 2026',
-            notes: 'Third payment Jan (291971)'
+            notes: 'Third payment Feb (291971)'
         }
     ],
     mortgage: [
@@ -61,7 +61,7 @@ const HISTORICAL_DATA = {
             amount: 1691,
             date: '2026-02-03T00:00:00.000Z',
             displayDate: '03 Feb 2026',
-            notes: 'Third payment (718812054)'
+            notes: 'Third payment Feb (718812054)'
         }
     ]
 };
